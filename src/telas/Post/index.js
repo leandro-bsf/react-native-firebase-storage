@@ -5,14 +5,16 @@ import estilos from "./estilos";
 import { entradas } from "./entradas";
 import { alteraDados } from "../../utils/comum";
 import { IconeClicavel } from "../../componentes/IconeClicavel";
-
 import { salvarImagem } from "../../servicos/storage";
+import * as ImagePicker from 'expo-image-picker';
 
-const imagemGalaxia = "https://img.freepik.com/vetores-gratis/fundo-de-galaxia-em-aquarela-pintado-a-mao_52683-63441.jpg?w=740&t=st=1691416309~exp=1691416909~hmac=7c196aa454bf52ce27c656ae519f94c341230b3411c97d64ba9692af6fd5fc9d"
+import uploadImagemPadrao from '../../assets/upload.jpeg';
 
 export default function Post({ navigation, route }) {
     const [desabilitarEnvio, setDesabilitarEnvio] = useState(false);
     const { item } = route?.params || {};
+
+    const [imagem, setImagem] = useState(null)
 
     const [post, setPost] = useState({
         titulo: item?.titulo || "",
@@ -21,29 +23,47 @@ export default function Post({ navigation, route }) {
         imagemUrl: item?.imagemUrl || null
     });
 
-   async function salvar() {
+    async function salvar() {
         setDesabilitarEnvio(true);
-
-       
 
         if (item) {
             await atualizarPost(item.id, post);
-           navigation.goBack();
-        } else {
-           const idpost = await salvarPost({post});
-           navigation.goBack();
-           const url = await salvarImagem(imagemGalaxia, 'galaxia');
-            await atualizarPost(idpost, post),{
+            return navigation.goBack();
+        } 
+
+        const idPost = await salvarPost({
+            ...post,
+            imagemUrl: ''
+        });
+        navigation.goBack()
+
+        if(imagem != null){
+            const url = await salvarImagem(imagem, idPost);
+            await atualizarPost(idPost, {
                 imagemUrl: url
-            }
+            });    
         }
-     
+        
+    }
+
+    async function escolherImagemDaGaleria(){
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1,
+          });
+      
+          console.log(result);
+      
+          if (!result.canceled) {
+            setImagem(result.assets[0].uri);
+          }
     }
 
 
     return (
         <View style={estilos.container}>
-      
             <View style={estilos.containerTitulo}>
                 <Text style={estilos.titulo}>{item ? "Editar post" : "Novo Post"}</Text>
                 <IconeClicavel 
@@ -74,6 +94,17 @@ export default function Post({ navigation, route }) {
                         />
                     </View>
                 ))}
+
+                <TouchableOpacity 
+                    style={estilos.imagem}
+                    onPress={escolherImagemDaGaleria}
+                >
+                    <Image 
+                        source={imagem ? { uri: imagem} : uploadImagemPadrao}
+                        style={estilos.imagem}
+                    />
+                </TouchableOpacity>
+
             </ScrollView>
 
             <TouchableOpacity style={estilos.botao} onPress={salvar} disabled={desabilitarEnvio}>

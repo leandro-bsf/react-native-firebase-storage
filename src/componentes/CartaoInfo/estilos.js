@@ -26,6 +26,7 @@ export default StyleSheet.create({
         height: 200,
         borderTopLeftRadius: 10,
         borderTopRightRadius: 10,
+        backgroundColor:"#d9d9d9"
     },
     containerTexto: {
         flexDirection: "column",
