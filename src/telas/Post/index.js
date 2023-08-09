@@ -7,15 +7,17 @@ import { alteraDados } from "../../utils/comum";
 import { IconeClicavel } from "../../componentes/IconeClicavel";
 import { salvarImagem } from "../../servicos/storage";
 import * as ImagePicker from 'expo-image-picker';
+import {MenuSelecaoInferior} from '../../componentes/menuSelecaoInferior'
 
 import uploadImagemPadrao from '../../assets/upload.jpeg';
+
 
 export default function Post({ navigation, route }) {
     const [desabilitarEnvio, setDesabilitarEnvio] = useState(false);
     const { item } = route?.params || {};
 
     const [imagem, setImagem] = useState(null)
-
+    const [mostrarMenu , SetmostrarMenu] = useState(false);
     const [post, setPost] = useState({
         titulo: item?.titulo || "",
         fonte: item?.fonte || "",
@@ -27,7 +29,7 @@ export default function Post({ navigation, route }) {
         setDesabilitarEnvio(true);
 
         if (item) {
-            await atualizarPost(item.id, post);
+            await atualizarPostComImagem();
             return navigation.goBack();
         } 
 
@@ -38,14 +40,24 @@ export default function Post({ navigation, route }) {
         navigation.goBack()
 
         if(imagem != null){
-            const url = await salvarImagem(imagem, idPost);
-            await atualizarPost(idPost, {
-                imagemUrl: url
-            });    
+            atualizarPostComImagem(idPost)   
         }
         
     }
+    async function atualizarPostComImagem(idPost){
+        const url = await salvarImagem(imagem, idPost);
+        await atualizarPost(idPost, {
+            imagemUrl: url
+        });
+    }
 
+    async function verificarAlteracaoPost(){
+            if(post.imagemUrl != imagem){
+                 atualizarPostComImagem(item.id);
+            }else{
+                atualizarPost(item.id, post )
+            }
+    }
     async function escolherImagemDaGaleria(){
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -110,6 +122,18 @@ export default function Post({ navigation, route }) {
             <TouchableOpacity style={estilos.botao} onPress={salvar} disabled={desabilitarEnvio}>
                 <Text style={estilos.textoBotao}>Salvar</Text>
             </TouchableOpacity>
+
+            <MenuSelecaoInferior setMostrarMenu=
+                {SetmostrarMenu} mostrarMenu={true}>
+                <TouchableOpacity style={estilos.opcao}>
+                    <Text>Adicionar Foto</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={estilos.opcao}>
+                    <Text>Remover Foto</Text>
+                </TouchableOpacity>
+            </MenuSelecaoInferior>
+
         </View>
     );
 }
